@@ -1,22 +1,42 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./Feed.css";
 import StoryReel from "./StoryReel";
 import MessageSender from "./MessageSender";
 import Post from "./Post";
-import UserImage from "./image/ram.jpeg";
+import { useStateValue } from "./StateProvider"
+import db from "./firebase"
 
 function Feed() {
+  const [posts, setPosts] = useState([])
+  const [{ user }, dispatch] = useStateValue()
+
+  useEffect(() => {
+    db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+      setPosts(snapshot.docs.map(doc => {
+        return {
+          id: doc.id,
+          data: doc.data()
+        }
+      }))
+    })
+  }, [])
+
   return (
     <div className="feed">
       <StoryReel />
       <MessageSender />
-      <Post
-        message="Wow this works"
-        username="Ram"
-        profilePic={UserImage}
-        image="https://media.istockphoto.com/photos/blue-abstract-background-or-texture-picture-id1138395421?k=6&m=1138395421&s=612x612&w=0&h=bJ1SRWujCgg3QWzkGPgaRiArNYohPl7-Wc4p_Fa_cyA="
-        timestamp="this is a timestamp"
-      />
+      {posts.map(post => {
+        return (
+          <Post 
+            key={post.id}
+            message={post.data.message} 
+            profilePic={post.data.profilePic} 
+            image={post.data.image} 
+            timestamp={post.data.timestamp} 
+            username={post.data.username}
+          />
+        )
+      })}
     </div>
   );
 }
